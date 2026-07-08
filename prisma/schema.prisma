@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  nome      String
+  senhaHash String
+  criadoEm  DateTime @default(now())
+  ganhos    Ganho[]
+  gastos    Gasto[]
+}
+
+model Ganho {
+  id        String   @id @default(uuid())
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  data      DateTime @db.Date
+  tipo      String // 'corrida' | 'dia'
+  app       String // Uber, 99, inDrive, Particular, Vários
+  valor     Decimal  @db.Decimal(10, 2)
+  km        Decimal? @db.Decimal(7, 1)
+  horas     Decimal? @db.Decimal(4, 1)
+  criadoEm  DateTime @default(now())
+
+  @@index([usuarioId, data])
+}
+
+model Gasto {
+  id          String   @id @default(uuid())
+  usuarioId   String
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  data        DateTime @db.Date
+  categoria   String
+  valor       Decimal  @db.Decimal(10, 2)
+  descricao   String?
+  combustivel String? // 'Etanol' | 'Gasolina' (só quando categoria = Combustível)
+  litros      Decimal? @db.Decimal(6, 2)
+  odometro    Int?
+  criadoEm    DateTime @default(now())
+
+  @@index([usuarioId, data])
+}
