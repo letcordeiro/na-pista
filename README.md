@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Na Pista — painel do motorista
 
-## Getting Started
+App mobile-first para motoristas de aplicativo controlarem ganhos (corridas
+avulsas ou fechamento do dia), gastos do carro e consumo de combustível
+(km/L real por tipo — etanol × gasolina). Multiusuário: cada motorista tem
+sua conta e enxerga apenas os próprios dados.
 
-First, run the development server:
+## Stack
+
+- Next.js (App Router) full-stack — todo dado passa por server actions
+- Tailwind CSS v4 · Recharts
+- PostgreSQL via Prisma
+- Auth.js (NextAuth) com Credentials (e-mail + senha, bcrypt), sessão JWT
+
+## Rodando local
 
 ```bash
+npm install
+cp .env.example .env   # preencher DATABASE_URL e AUTH_SECRET
+npx prisma migrate dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variáveis (`.env`):
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+| Variável | Descrição |
+|---|---|
+| `DATABASE_URL` | Postgres, ex.: `postgresql://user:senha@host:5432/napista?schema=public` |
+| `AUTH_SECRET` | gerar com `openssl rand -base64 32` |
+| `AUTH_TRUST_HOST` | `true` (necessário atrás do Traefik) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy (VPS Hostinger + Dokploy)
 
-## Learn More
+1. **Banco**: criar um serviço PostgreSQL no Dokploy (banco `napista`).
+   Usar o host interno do Dokploy na `DATABASE_URL` — o banco não é
+   exposto à internet.
+2. **App**: criar aplicação apontando para este repositório GitHub,
+   build via **Dockerfile** (na raiz). O container aplica
+   `prisma migrate deploy` automaticamente antes de subir.
+3. **Env**: definir `DATABASE_URL`, `AUTH_SECRET` e `AUTH_TRUST_HOST=true`.
+4. **Domínio**: cadastrar `napista.bionatural.tech` no Dokploy (porta 3000).
+   O wildcard `*.bionatural.tech` já aponta para a VPS; o Traefik emite o
+   certificado sozinho.
 
-To learn more about Next.js, take a look at the following resources:
+Qualquer push na branch principal dispara o redeploy.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Estrutura
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `prisma/schema.prisma` — modelo de dados (fonte da verdade)
+- `src/lib/metrics.js` — cálculos puros (resumo do período, km/L método
+  tanque cheio, R$/km por combustível)
+- `src/lib/acoes.js` — server actions (toda escrita filtra por `usuarioId`
+  da sessão via `getUsuarioSessao()`)
+- `src/app/` — telas: resumo `/`, `/ganhos`, `/gastos`, `/combustivel`,
+  `/login`, `/cadastro`
