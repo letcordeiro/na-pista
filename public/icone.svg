@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#14161B"/>
+  <rect x="248" y="96" width="16" height="64" rx="8" fill="#F5A524"/>
+  <rect x="248" y="224" width="16" height="64" rx="8" fill="#2C313C"/>
+  <rect x="248" y="352" width="16" height="64" rx="8" fill="#2C313C"/>
+  <text x="256" y="308" text-anchor="middle" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="700" font-size="96" letter-spacing="2" fill="#ECEEF2">NaPista</text>
+</svg>
