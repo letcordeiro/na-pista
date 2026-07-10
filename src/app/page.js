@@ -70,7 +70,7 @@ export default async function PaginaResumo({ searchParams }) {
     return (
       <>
         <Header nome={usuario.nome} />
-        <main className="mx-auto flex max-w-md flex-col px-4 pb-24 pt-16 text-center">
+        <main className="mx-auto flex max-w-md flex-col px-4 pb-28 pt-16 text-center">
           <p className="font-titulo text-2xl font-semibold uppercase tracking-wider text-texto">
             Bem-vindo, {usuario.nome.split(" ")[0]}
           </p>
@@ -99,7 +99,7 @@ export default async function PaginaResumo({ searchParams }) {
   return (
     <>
       <Header nome={usuario.nome} />
-      <main className="mx-auto max-w-md space-y-4 px-4 pb-24 pt-4">
+      <main className="mx-auto max-w-md space-y-4 px-4 pb-28 pt-4">
         <div className="grid grid-cols-3 gap-1 rounded-xl border border-borda bg-card p-1">
           {PERIODOS.map((p) => (
             <Link

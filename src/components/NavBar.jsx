@@ -56,19 +56,19 @@ export default function NavBar() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-borda bg-card pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto grid h-16 max-w-md grid-cols-4">
+      <div className="mx-auto grid h-20 max-w-md grid-cols-4">
         {ITENS.map(({ href, rotulo, Icone }) => {
           const ativo = pathname === href;
           return (
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center justify-center gap-1 ${
+              className={`flex flex-col items-center justify-center gap-1.5 ${
                 ativo ? "text-ambar" : "text-texto-sec"
               }`}
             >
-              <Icone />
-              <span className="font-titulo text-[11px] font-semibold uppercase tracking-wider">
+              <Icone width={26} height={26} />
+              <span className="font-titulo text-xs font-semibold uppercase tracking-wider">
                 {rotulo}
               </span>
             </Link>

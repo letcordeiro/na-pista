@@ -43,7 +43,7 @@ export default async function PaginaCombustivel() {
   return (
     <>
       <Header nome={usuario.nome} />
-      <main className="mx-auto max-w-md space-y-4 px-4 pb-24 pt-4">
+      <main className="mx-auto max-w-md space-y-4 px-4 pb-28 pt-4">
         <h1 className="font-titulo text-xl font-semibold uppercase tracking-wider text-texto">
           Etanol × Gasolina
         </h1>
