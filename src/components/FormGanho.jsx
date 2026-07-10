@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { criarGanho } from "@/lib/acoes";
 import { APPS, TIPOS_GANHO } from "@/lib/constantes";
 import Chip from "@/components/Chip";
+import Toast from "@/components/Toast";
 
 const CAMPO =
   "h-12 w-full rounded-lg border border-borda bg-superficie px-3 font-mono text-base text-texto outline-none focus:border-ambar";
@@ -13,9 +14,13 @@ export default function FormGanho({ hoje }) {
   const formRef = useRef(null);
   const [tipo, setTipo] = useState("corrida");
   const [app, setApp] = useState("Uber");
+  const [salvos, setSalvos] = useState(0);
 
   useEffect(() => {
-    if (estado?.ok) formRef.current?.reset();
+    if (estado?.ok) {
+      formRef.current?.reset();
+      setSalvos((n) => n + 1);
+    }
   }, [estado]);
 
   return (
@@ -52,6 +57,7 @@ export default function FormGanho({ hoje }) {
           inputMode="decimal"
           placeholder="0,00"
           required
+          autoFocus
           className={`${CAMPO} h-14 text-2xl font-semibold text-ganho`}
         />
       </label>
@@ -86,6 +92,8 @@ export default function FormGanho({ hoje }) {
       >
         {pendente ? "Salvando…" : "Salvar ganho"}
       </button>
+
+      <Toast gatilho={salvos} mensagem="Ganho salvo" />
     </form>
   );
 }

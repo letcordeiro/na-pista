@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { criarGasto } from "@/lib/acoes";
 import { CATEGORIAS_GASTO, COMBUSTIVEIS } from "@/lib/constantes";
 import Chip from "@/components/Chip";
+import Toast from "@/components/Toast";
 
 const CAMPO =
   "h-12 w-full rounded-lg border border-borda bg-superficie px-3 font-mono text-base text-texto outline-none focus:border-ambar";
@@ -13,10 +14,14 @@ export default function FormGasto({ hoje }) {
   const formRef = useRef(null);
   const [categoria, setCategoria] = useState("Combustível");
   const [combustivel, setCombustivel] = useState("Etanol");
+  const [salvos, setSalvos] = useState(0);
   const ehCombustivel = categoria === "Combustível";
 
   useEffect(() => {
-    if (estado?.ok) formRef.current?.reset();
+    if (estado?.ok) {
+      formRef.current?.reset();
+      setSalvos((n) => n + 1);
+    }
   }, [estado]);
 
   return (
@@ -45,6 +50,7 @@ export default function FormGasto({ hoje }) {
           inputMode="decimal"
           placeholder="0,00"
           required
+          autoFocus
           className={`${CAMPO} h-14 text-2xl font-semibold text-gasto`}
         />
       </label>
@@ -100,6 +106,8 @@ export default function FormGasto({ hoje }) {
       >
         {pendente ? "Salvando…" : "Salvar gasto"}
       </button>
+
+      <Toast gatilho={salvos} mensagem="Gasto salvo" />
     </form>
   );
 }

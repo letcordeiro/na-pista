@@ -36,10 +36,13 @@ export default async function PaginaResumo({ searchParams }) {
     usuarioId: usuario.id,
     data: { gte: isoParaDate(inicioBusca), lte: isoParaDate(hoje) },
   };
-  const [ganhosBrutos, gastosBrutos] = await Promise.all([
+  const [ganhosBrutos, gastosBrutos, totalGanhos, totalGastos] = await Promise.all([
     prisma.ganho.findMany({ where: filtro }),
     prisma.gasto.findMany({ where: filtro }),
+    prisma.ganho.count({ where: { usuarioId: usuario.id } }),
+    prisma.gasto.count({ where: { usuarioId: usuario.id } }),
   ]);
+  const primeiroAcesso = totalGanhos === 0 && totalGastos === 0;
 
   const ganhos = ganhosBrutos.map((g) => ({
     valor: Number(g.valor),
@@ -61,6 +64,37 @@ export default async function PaginaResumo({ searchParams }) {
     gastos.filter((g) => g.dataISO >= inicioGrafico),
     dias7
   ).map((p) => ({ ...p, rotulo: dataCurta(isoParaDate(p.dia)) }));
+  const temDadosGrafico = grafico.some((d) => d.ganhos > 0 || d.gastos > 0);
+
+  if (primeiroAcesso) {
+    return (
+      <>
+        <Header nome={usuario.nome} />
+        <main className="mx-auto flex max-w-md flex-col px-4 pb-24 pt-16 text-center">
+          <p className="font-titulo text-2xl font-semibold uppercase tracking-wider text-texto">
+            Bem-vindo, {usuario.nome.split(" ")[0]}
+          </p>
+          <p className="mt-2 text-sm text-texto-sec">
+            Comece lançando seu primeiro ganho do dia. Depois é só registrar os
+            gastos e abastecimentos — o resto o painel calcula pra você.
+          </p>
+          <Link
+            href="/ganhos"
+            className="mt-8 flex h-14 items-center justify-center rounded-xl bg-ambar font-titulo text-lg font-bold uppercase tracking-widest text-fundo"
+          >
+            Lançar primeiro ganho
+          </Link>
+          <Link
+            href="/gastos"
+            className="mt-3 flex h-12 items-center justify-center rounded-xl border border-borda font-titulo text-sm font-semibold uppercase tracking-wider text-texto-sec"
+          >
+            Lançar um gasto
+          </Link>
+        </main>
+        <NavBar />
+      </>
+    );
+  }
 
   return (
     <>
@@ -123,7 +157,13 @@ export default async function PaginaResumo({ searchParams }) {
           <p className="mb-3 text-xs uppercase tracking-[0.2em] text-texto-sec">
             Últimos 7 dias
           </p>
-          <GraficoSemana dados={grafico} />
+          {temDadosGrafico ? (
+            <GraficoSemana dados={grafico} />
+          ) : (
+            <div className="flex h-44 items-center justify-center text-center text-sm text-apagado">
+              Sem lançamentos nos últimos 7 dias.
+            </div>
+          )}
         </section>
       </main>
       <NavBar />
