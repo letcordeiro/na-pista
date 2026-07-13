@@ -5,6 +5,7 @@ import { criarGasto } from "@/lib/acoes";
 import { CATEGORIAS_GASTO, COMBUSTIVEIS } from "@/lib/constantes";
 import Chip from "@/components/Chip";
 import Toast from "@/components/Toast";
+import CurrencyInput from "@/components/CurrencyInput";
 
 const CAMPO =
   "h-12 w-full rounded-lg border border-borda bg-superficie px-3 font-mono text-base text-texto outline-none focus:border-ambar";
@@ -45,12 +46,11 @@ export default function FormGasto({ hoje }) {
         <span className="mb-1 block text-xs uppercase tracking-wider text-texto-sec">
           Valor (R$)
         </span>
-        <input
+        <CurrencyInput
           name="valor"
-          inputMode="decimal"
-          placeholder="0,00"
           required
           autoFocus
+          resetSignal={salvos}
           className={`${CAMPO} h-14 text-2xl font-semibold text-gasto`}
         />
       </label>
