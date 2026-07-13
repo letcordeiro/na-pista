@@ -54,10 +54,10 @@ export default function FormGanho({ hoje }) {
           Valor (R$)
         </span>
         <CurrencyInput
+          key={salvos}
           name="valor"
           required
           autoFocus
-          resetSignal={salvos}
           className={`${CAMPO} h-14 text-2xl font-semibold text-ganho`}
         />
       </label>

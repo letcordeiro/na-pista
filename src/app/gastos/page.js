@@ -1,13 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { getUsuarioSessao } from "@/lib/sessao";
-import { excluirGasto } from "@/lib/acoes";
 import { listarVeiculos, sugerirVeiculo } from "@/lib/veiculos";
-import { hojeISO } from "@/lib/datas";
-import { brl, num, dataCurta } from "@/lib/format";
+import { hojeISO, dateParaISO } from "@/lib/datas";
+import { dataCurta } from "@/lib/format";
 import Header from "@/components/Header";
 import NavBar from "@/components/NavBar";
 import FormGasto from "@/components/FormGasto";
-import ExcluirBotao from "@/components/ExcluirBotao";
+import GastoItem from "@/components/GastoItem";
 
 export const metadata = { title: "Gastos — Na Pista" };
 
@@ -25,6 +24,23 @@ export default async function PaginaGastos() {
     sugerirVeiculo(usuario.id, veiculos),
   ]);
   const varios = veiculos.length > 1;
+  const opcoesVeiculo = veiculos.map((v) => ({ id: v.id, nome: v.nome }));
+
+  // Serializa cada gasto num objeto simples (Decimal -> número, Date -> ISO)
+  // que o GastoItem/FormGasto usam tanto pra exibir quanto pra editar.
+  const itens = gastos.map((g) => ({
+    id: g.id,
+    categoria: g.categoria,
+    valor: Number(g.valor),
+    descricao: g.descricao,
+    combustivel: g.combustivel,
+    litros: g.litros == null ? null : Number(g.litros),
+    odometro: g.odometro,
+    veiculoId: g.veiculoId,
+    veiculoNome: g.veiculo.nome,
+    dataISO: dateParaISO(g.data),
+    dataCurta: dataCurta(g.data),
+  }));
 
   return (
     <>
@@ -35,52 +51,28 @@ export default async function PaginaGastos() {
         </h1>
         <FormGasto
           hoje={hojeISO()}
-          veiculos={veiculos.map((v) => ({ id: v.id, nome: v.nome }))}
+          veiculos={opcoesVeiculo}
           veiculoSugerido={veiculoSugerido}
         />
 
         <h2 className="pt-2 font-titulo text-xl font-semibold uppercase tracking-wider text-texto">
           Últimos lançamentos
         </h2>
-        {gastos.length === 0 ? (
+        {itens.length === 0 ? (
           <p className="rounded-xl border border-borda bg-card p-4 text-sm text-texto-sec">
             Nenhum gasto lançado ainda.
           </p>
         ) : (
-          <ul className="divide-y divide-borda overflow-hidden rounded-xl border border-borda bg-card">
-            {gastos.map((g) => (
-              <li key={g.id} className="flex items-center gap-3 p-3">
-                <span className="w-12 shrink-0 font-mono text-sm text-texto-sec">
-                  {dataCurta(g.data)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-texto">
-                    {g.categoria}
-                    {g.combustivel && (
-                      <span className="text-apagado">{` · ${g.combustivel}`}</span>
-                    )}
-                    {varios && (
-                      <span className="text-apagado">{` · ${g.veiculo.nome}`}</span>
-                    )}
-                  </p>
-                  {g.litros != null ? (
-                    <p className="font-mono text-xs text-texto-sec">
-                      {num(g.litros, 2)} L
-                      {g.odometro != null && ` · ${g.odometro.toLocaleString("pt-BR")} km`}
-                    </p>
-                  ) : (
-                    g.descricao && (
-                      <p className="truncate text-xs text-texto-sec">{g.descricao}</p>
-                    )
-                  )}
-                </div>
-                <span className="font-mono text-base font-medium text-gasto">
-                  {brl(g.valor)}
-                </span>
-                <ExcluirBotao acao={excluirGasto.bind(null, g.id)} />
-              </li>
+          <div className="space-y-2">
+            {itens.map((g) => (
+              <GastoItem
+                key={g.id}
+                gasto={g}
+                veiculos={opcoesVeiculo}
+                mostrarVeiculo={varios}
+              />
             ))}
-          </ul>
+          </div>
         )}
       </main>
       <NavBar />

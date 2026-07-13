@@ -119,9 +119,9 @@ export async function excluirGanho(id) {
 
 // ---------- Gastos ----------
 
-export async function criarGasto(prevState, formData) {
-  const usuario = await getUsuarioSessao();
-
+// Lê e valida os campos de um gasto. Retorna { erro } ou { dados } prontos
+// para create/update. Usado por criarGasto e editarGasto.
+async function validarGasto(formData, usuarioId) {
   const categoria = String(formData.get("categoria") ?? "");
   const valor = lerNumero(formData, "valor");
   const dataISO = lerData(formData);
@@ -133,7 +133,7 @@ export async function criarGasto(prevState, formData) {
   if (!dataISO) return { erro: "Informe a data." };
 
   const veiculo = await prisma.veiculo.findFirst({
-    where: { id: veiculoId, usuarioId: usuario.id },
+    where: { id: veiculoId, usuarioId },
     select: { id: true },
   });
   if (!veiculo) return { erro: "Escolha o veículo." };
@@ -154,9 +154,8 @@ export async function criarGasto(prevState, formData) {
     if (odometro !== null && odometro <= 0) return { erro: "Odômetro inválido." };
   }
 
-  await prisma.gasto.create({
-    data: {
-      usuarioId: usuario.id,
+  return {
+    dados: {
       veiculoId,
       data: isoParaDate(dataISO),
       categoria,
@@ -166,7 +165,35 @@ export async function criarGasto(prevState, formData) {
       litros,
       odometro,
     },
+  };
+}
+
+export async function criarGasto(prevState, formData) {
+  const usuario = await getUsuarioSessao();
+  const { erro, dados } = await validarGasto(formData, usuario.id);
+  if (erro) return { erro };
+
+  await prisma.gasto.create({
+    data: { usuarioId: usuario.id, ...dados },
   });
+
+  revalidatePath("/");
+  revalidatePath("/gastos");
+  revalidatePath("/combustivel");
+  return { ok: true };
+}
+
+export async function editarGasto(prevState, formData) {
+  const usuario = await getUsuarioSessao();
+  const id = String(formData.get("id") ?? "");
+  const { erro, dados } = await validarGasto(formData, usuario.id);
+  if (erro) return { erro };
+
+  const res = await prisma.gasto.updateMany({
+    where: { id, usuarioId: usuario.id },
+    data: dados,
+  });
+  if (res.count === 0) return { erro: "Gasto não encontrado." };
 
   revalidatePath("/");
   revalidatePath("/gastos");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { brl } from "@/lib/format";
 
 // Entrada monetária com máscara BRL, digitação da direita pra esquerda
@@ -8,15 +8,15 @@ import { brl } from "@/lib/format";
 // ("R$ 1.500,00"); o que vai pro form (input hidden `name`) é o número
 // puro em reais ("1500.00"), no mesmo formato que o server action já lê.
 //
+// Para limpar após salvar, o pai remonta via `key` (ex.: key={salvos}).
+//
 // Props:
 // - name: nome do campo hidden enviado no submit (padrão "valor")
 // - defaultReais: valor inicial em reais (ex.: ao editar um lançamento)
-// - resetSignal: muda de valor => zera o campo (usar após salvar)
-// - required, className, placeholder: repassados ao input visível
+// - required, className, placeholder, autoFocus: repassados ao input visível
 export default function CurrencyInput({
   name = "valor",
   defaultReais = null,
-  resetSignal = 0,
   required = false,
   className = "",
   placeholder = "R$ 0,00",
@@ -27,11 +27,6 @@ export default function CurrencyInput({
       ? Math.round(defaultReais * 100)
       : 0;
   const [centavos, setCentavos] = useState(inicial);
-
-  // Limpa quando o pai sinaliza (ex.: form salvo com sucesso)
-  useEffect(() => {
-    setCentavos(0);
-  }, [resetSignal]);
 
   function aoDigitar(e) {
     // Junta todos os dígitos do que está no campo e reinterpreta como
