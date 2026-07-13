@@ -10,11 +10,12 @@ import CurrencyInput from "@/components/CurrencyInput";
 const CAMPO =
   "h-12 w-full rounded-lg border border-borda bg-superficie px-3 font-mono text-base text-texto outline-none focus:border-ambar";
 
-export default function FormGasto({ hoje }) {
+export default function FormGasto({ hoje, veiculos = [], veiculoSugerido = null }) {
   const [estado, agir, pendente] = useActionState(criarGasto, null);
   const formRef = useRef(null);
   const [categoria, setCategoria] = useState("Combustível");
   const [combustivel, setCombustivel] = useState("Etanol");
+  const [veiculoId, setVeiculoId] = useState(veiculoSugerido ?? veiculos[0]?.id ?? "");
   const [salvos, setSalvos] = useState(0);
   const ehCombustivel = categoria === "Combustível";
 
@@ -33,6 +34,26 @@ export default function FormGasto({ hoje }) {
     >
       <input type="hidden" name="categoria" value={categoria} />
       {ehCombustivel && <input type="hidden" name="combustivel" value={combustivel} />}
+      <input type="hidden" name="veiculoId" value={veiculoId} />
+
+      {veiculos.length > 1 && (
+        <div>
+          <span className="mb-1 block text-xs uppercase tracking-wider text-texto-sec">
+            Veículo
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {veiculos.map((v) => (
+              <Chip
+                key={v.id}
+                selecionado={veiculoId === v.id}
+                onClick={() => setVeiculoId(v.id)}
+              >
+                {v.nome}
+              </Chip>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {CATEGORIAS_GASTO.map((c) => (

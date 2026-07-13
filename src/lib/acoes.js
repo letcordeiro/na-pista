@@ -126,10 +126,17 @@ export async function criarGasto(prevState, formData) {
   const valor = lerNumero(formData, "valor");
   const dataISO = lerData(formData);
   const descricao = String(formData.get("descricao") ?? "").trim() || null;
+  const veiculoId = String(formData.get("veiculoId") ?? "");
 
   if (!CATEGORIAS_GASTO.includes(categoria)) return { erro: "Escolha a categoria." };
   if (!valor || valor <= 0) return { erro: "Informe o valor." };
   if (!dataISO) return { erro: "Informe a data." };
+
+  const veiculo = await prisma.veiculo.findFirst({
+    where: { id: veiculoId, usuarioId: usuario.id },
+    select: { id: true },
+  });
+  if (!veiculo) return { erro: "Escolha o veículo." };
 
   let combustivel = null;
   let litros = null;
@@ -150,6 +157,7 @@ export async function criarGasto(prevState, formData) {
   await prisma.gasto.create({
     data: {
       usuarioId: usuario.id,
+      veiculoId,
       data: isoParaDate(dataISO),
       categoria,
       valor,
@@ -174,4 +182,80 @@ export async function excluirGasto(id) {
   revalidatePath("/");
   revalidatePath("/gastos");
   revalidatePath("/combustivel");
+}
+
+// ---------- Veículos ----------
+
+function lerDadosVeiculo(formData) {
+  const nome = String(formData.get("nome") ?? "").trim();
+  const modelo = String(formData.get("modelo") ?? "").trim() || null;
+  const placa = String(formData.get("placa") ?? "").trim().toUpperCase() || null;
+  const consumoMedio = lerNumero(formData, "consumoMedio");
+  return { nome, modelo, placa, consumoMedio };
+}
+
+export async function criarVeiculo(prevState, formData) {
+  const usuario = await getUsuarioSessao();
+  const { nome, modelo, placa, consumoMedio } = lerDadosVeiculo(formData);
+
+  if (!nome) return { erro: "Dê um nome ao veículo." };
+  if (consumoMedio !== null && consumoMedio <= 0) {
+    return { erro: "Consumo médio inválido." };
+  }
+
+  await prisma.veiculo.create({
+    data: { usuarioId: usuario.id, nome, modelo, placa, consumoMedio },
+  });
+
+  revalidatePath("/veiculos");
+  revalidatePath("/gastos");
+  return { ok: true };
+}
+
+export async function editarVeiculo(prevState, formData) {
+  const usuario = await getUsuarioSessao();
+  const id = String(formData.get("id") ?? "");
+  const { nome, modelo, placa, consumoMedio } = lerDadosVeiculo(formData);
+
+  if (!nome) return { erro: "Dê um nome ao veículo." };
+  if (consumoMedio !== null && consumoMedio <= 0) {
+    return { erro: "Consumo médio inválido." };
+  }
+
+  const res = await prisma.veiculo.updateMany({
+    where: { id, usuarioId: usuario.id },
+    data: { nome, modelo, placa, consumoMedio },
+  });
+  if (res.count === 0) return { erro: "Veículo não encontrado." };
+
+  revalidatePath("/veiculos");
+  revalidatePath("/gastos");
+  return { ok: true };
+}
+
+export async function excluirVeiculo(id) {
+  const usuario = await getUsuarioSessao();
+  const veiculoId = String(id);
+
+  const [total, comGastos] = await Promise.all([
+    prisma.veiculo.count({ where: { usuarioId: usuario.id } }),
+    prisma.gasto.count({ where: { usuarioId: usuario.id, veiculoId } }),
+  ]);
+
+  if (total <= 1) {
+    return { erro: "Você precisa ter pelo menos um veículo." };
+  }
+  if (comGastos > 0) {
+    return {
+      erro: `Este veículo tem ${comGastos} lançamento(s). Remova ou realoque os gastos antes de excluí-lo.`,
+    };
+  }
+
+  await prisma.veiculo.deleteMany({
+    where: { id: veiculoId, usuarioId: usuario.id },
+  });
+
+  revalidatePath("/veiculos");
+  revalidatePath("/gastos");
+  return { ok: true };
 }

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getUsuarioSessao } from "@/lib/sessao";
 import { excluirGasto } from "@/lib/acoes";
+import { listarVeiculos, sugerirVeiculo } from "@/lib/veiculos";
 import { hojeISO } from "@/lib/datas";
 import { brl, num, dataCurta } from "@/lib/format";
 import Header from "@/components/Header";
@@ -13,11 +14,17 @@ export const metadata = { title: "Gastos — Na Pista" };
 export default async function PaginaGastos() {
   const usuario = await getUsuarioSessao();
 
-  const gastos = await prisma.gasto.findMany({
-    where: { usuarioId: usuario.id },
-    orderBy: [{ data: "desc" }, { criadoEm: "desc" }],
-    take: 20,
-  });
+  const veiculos = await listarVeiculos(usuario.id);
+  const [gastos, veiculoSugerido] = await Promise.all([
+    prisma.gasto.findMany({
+      where: { usuarioId: usuario.id },
+      orderBy: [{ data: "desc" }, { criadoEm: "desc" }],
+      take: 20,
+      include: { veiculo: { select: { nome: true } } },
+    }),
+    sugerirVeiculo(usuario.id, veiculos),
+  ]);
+  const varios = veiculos.length > 1;
 
   return (
     <>
@@ -26,7 +33,11 @@ export default async function PaginaGastos() {
         <h1 className="font-titulo text-xl font-semibold uppercase tracking-wider text-texto">
           Novo gasto
         </h1>
-        <FormGasto hoje={hojeISO()} />
+        <FormGasto
+          hoje={hojeISO()}
+          veiculos={veiculos.map((v) => ({ id: v.id, nome: v.nome }))}
+          veiculoSugerido={veiculoSugerido}
+        />
 
         <h2 className="pt-2 font-titulo text-xl font-semibold uppercase tracking-wider text-texto">
           Últimos lançamentos
@@ -47,6 +58,9 @@ export default async function PaginaGastos() {
                     {g.categoria}
                     {g.combustivel && (
                       <span className="text-apagado">{` · ${g.combustivel}`}</span>
+                    )}
+                    {varios && (
+                      <span className="text-apagado">{` · ${g.veiculo.nome}`}</span>
                     )}
                   </p>
                   {g.litros != null ? (

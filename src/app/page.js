@@ -36,12 +36,17 @@ export default async function PaginaResumo({ searchParams }) {
     usuarioId: usuario.id,
     data: { gte: isoParaDate(inicioBusca), lte: isoParaDate(hoje) },
   };
-  const [ganhosBrutos, gastosBrutos, totalGanhos, totalGastos] = await Promise.all([
-    prisma.ganho.findMany({ where: filtro }),
-    prisma.gasto.findMany({ where: filtro }),
-    prisma.ganho.count({ where: { usuarioId: usuario.id } }),
-    prisma.gasto.count({ where: { usuarioId: usuario.id } }),
-  ]);
+  const [ganhosBrutos, gastosBrutos, totalGanhos, totalGastos, totalVeiculos] =
+    await Promise.all([
+      prisma.ganho.findMany({ where: filtro }),
+      prisma.gasto.findMany({
+        where: filtro,
+        include: { veiculo: { select: { nome: true } } },
+      }),
+      prisma.ganho.count({ where: { usuarioId: usuario.id } }),
+      prisma.gasto.count({ where: { usuarioId: usuario.id } }),
+      prisma.veiculo.count({ where: { usuarioId: usuario.id } }),
+    ]);
   const primeiroAcesso = totalGanhos === 0 && totalGastos === 0;
 
   const ganhos = ganhosBrutos.map((g) => ({
@@ -53,10 +58,23 @@ export default async function PaginaResumo({ searchParams }) {
   const gastos = gastosBrutos.map((g) => ({
     valor: Number(g.valor),
     dataISO: dateParaISO(g.data),
+    veiculoNome: g.veiculo.nome,
   }));
 
   const noPeriodo = (item) => item.dataISO >= de && item.dataISO <= ate;
   const resumo = calcularResumo(ganhos.filter(noPeriodo), gastos.filter(noPeriodo));
+
+  // Despesa por veículo no período (só faz sentido com mais de um carro)
+  const gastosPorVeiculo = (() => {
+    if (totalVeiculos <= 1) return [];
+    const acc = {};
+    for (const g of gastos.filter(noPeriodo)) {
+      acc[g.veiculoNome] = (acc[g.veiculoNome] || 0) + g.valor;
+    }
+    return Object.entries(acc)
+      .map(([nome, total]) => ({ nome, total }))
+      .sort((a, b) => b.total - a.total);
+  })();
 
   const dias7 = Array.from({ length: 7 }, (_, i) => addDias(hoje, i - 6));
   const grafico = serieDiaria(
@@ -152,6 +170,22 @@ export default async function PaginaResumo({ searchParams }) {
             </div>
           ))}
         </section>
+
+        {gastosPorVeiculo.length > 0 && (
+          <section className="rounded-xl border border-borda bg-card p-4">
+            <p className="mb-3 text-xs uppercase tracking-[0.2em] text-texto-sec">
+              Gastos por veículo
+            </p>
+            <ul className="divide-y divide-borda">
+              {gastosPorVeiculo.map((v) => (
+                <li key={v.nome} className="flex items-center justify-between py-2">
+                  <span className="truncate text-sm text-texto">{v.nome}</span>
+                  <span className="font-mono text-base text-gasto">{brl(v.total)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="rounded-xl border border-borda bg-card p-4">
           <p className="mb-3 text-xs uppercase tracking-[0.2em] text-texto-sec">

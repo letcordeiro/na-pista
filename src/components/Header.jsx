@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { sair } from "@/lib/acoes";
 
 export default function Header({ nome }) {
@@ -12,7 +13,20 @@ export default function Header({ nome }) {
             painel do motorista
           </p>
         </div>
-        <form action={sair}>
+        <div className="flex items-center gap-1">
+          <Link
+            href="/veiculos"
+            title="Meus veículos"
+            aria-label="Meus veículos"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-apagado transition-colors hover:text-texto-sec"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 17h14M6.5 17l-1.6-5.2a2 2 0 0 1 .1-1.4l1.3-2.9A2 2 0 0 1 8.1 6h7.8a2 2 0 0 1 1.8 1.5l1.3 2.9a2 2 0 0 1 .1 1.4L17.5 17" />
+              <circle cx="7.5" cy="17.5" r="1.5" />
+              <circle cx="16.5" cy="17.5" r="1.5" />
+            </svg>
+          </Link>
+          <form action={sair}>
           <button
             title={nome}
             className="flex h-10 items-center gap-1.5 px-2 text-xs uppercase tracking-wider text-apagado transition-colors hover:text-texto-sec"
@@ -24,7 +38,8 @@ export default function Header({ nome }) {
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
           </button>
-        </form>
+          </form>
+        </div>
       </div>
     </header>
   );

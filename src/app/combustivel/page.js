@@ -6,7 +6,9 @@ import {
   custoPorKmCombustivel,
   combustivelCompensando,
 } from "@/lib/metrics";
+import Link from "next/link";
 import { COMBUSTIVEIS } from "@/lib/constantes";
+import { listarVeiculos } from "@/lib/veiculos";
 import { dateParaISO } from "@/lib/datas";
 import { brl, num, dataCurta } from "@/lib/format";
 import Header from "@/components/Header";
@@ -14,11 +16,22 @@ import NavBar from "@/components/NavBar";
 
 export const metadata = { title: "Combustível — Na Pista" };
 
-export default async function PaginaCombustivel() {
+export default async function PaginaCombustivel({ searchParams }) {
   const usuario = await getUsuarioSessao();
 
+  const veiculos = await listarVeiculos(usuario.id);
+  const params = await searchParams;
+  const selecionado = veiculos.some((v) => v.id === params?.veiculo)
+    ? params.veiculo
+    : veiculos[0]?.id ?? null;
+
+  // km/L é por odômetro: cada carro tem sua própria sequência, nunca misturar
   const registros = await prisma.gasto.findMany({
-    where: { usuarioId: usuario.id, categoria: "Combustível" },
+    where: {
+      usuarioId: usuario.id,
+      categoria: "Combustível",
+      veiculoId: selecionado ?? undefined,
+    },
     orderBy: [{ data: "desc" }, { criadoEm: "desc" }],
   });
 
@@ -47,6 +60,24 @@ export default async function PaginaCombustivel() {
         <h1 className="font-titulo text-xl font-semibold uppercase tracking-wider text-texto">
           Etanol × Gasolina
         </h1>
+
+        {veiculos.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            {veiculos.map((v) => (
+              <Link
+                key={v.id}
+                href={`/combustivel?veiculo=${v.id}`}
+                className={`h-10 rounded-lg border px-3 font-titulo text-sm font-semibold uppercase tracking-wide leading-[2.5rem] ${
+                  selecionado === v.id
+                    ? "border-ambar bg-ambar/10 text-ambar"
+                    : "border-borda bg-superficie text-texto-sec"
+                }`}
+              >
+                {v.nome}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {medidos < 2 && (
           <p className="rounded-xl border border-borda bg-card p-4 text-sm text-texto-sec">
