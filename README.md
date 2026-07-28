@@ -53,3 +53,7 @@ Qualquer push na branch principal dispara o redeploy.
   da sessão via `getUsuarioSessao()`)
 - `src/app/` — telas: resumo `/`, `/ganhos`, `/gastos`, `/combustivel`,
   `/login`, `/cadastro`
+
+---
+
+© 2026 Letícia Cordeiro — software proprietário, todos os direitos reservados. Ver [LICENSE](LICENSE).
